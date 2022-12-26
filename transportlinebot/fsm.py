@@ -1,7 +1,6 @@
 from transitions.extensions import GraphMachine
 from functools import partial
 
-
 class FSMModel(GraphMachine):
     fsm_filename = 'FSM_diagram.png'
     state = ""

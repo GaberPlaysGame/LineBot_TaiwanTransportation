@@ -10,6 +10,7 @@ from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextSendMessage, ImageSendMessage
 
 from .fsm import FSMModel 
+from .db import MRT_Route_DB
 
 import requests
 import urllib
@@ -33,6 +34,8 @@ machine = FSMModel(
     use_pygraphviz=False,
 )
 
+mrt_db = MRT_Route_DB()
+
 @csrf_exempt
 def callback(request):
     if request.method == 'POST':
@@ -50,14 +53,6 @@ def callback(request):
             if isinstance(event, MessageEvent):     # 如果有訊息事件
                 text = event.message.text
                 FSM_command = ['fsm', 'finite state machine']
-                line_lists_taipei = [
-                    '環狀線', '北環段', '南環段', '東環段', '環狀線東環段', '環狀線北環段', '環狀線南環段', '環狀線南北環', '環狀線南北環段',
-                    '萬大樹林線', '萬大中和樹林線', '萬大線', '樹林線',
-                    '板南線',
-                    '信義線', '信義線東延段',
-                    '民生汐止線', '汐東線', '汐東捷運',
-                    
-                ]
                 line_lists_newtaipei = [
                     '環狀線', '北環段', '南環段', '環狀線北環段', '環狀線南環段', '環狀線南北環', '環狀線南北環段',
                     '萬大樹林線', '萬大中和樹林線', '萬大線', '樹林線',
@@ -130,7 +125,7 @@ def callback(request):
                         '● (A) 機捷',
                         '● (KL) 基隆捷運',
                     ]
-                    test_msg = '請輸入你想查詢的路線建設資訊\n'
+                    test_msg = '請輸入你想查詢的路線建設資訊，若要了解路線，請在名稱後方加上"簡介"，並以空白分隔\n'
                     counter = 0
                     for i in route:
                         counter += 1
@@ -203,53 +198,73 @@ def callback(request):
                     )   
                 elif machine.state == 'Taipei':
                     return_msg = ""
-                    if text in line_lists_taipei:
-                        page = 1
-                        response_page = "https://www.dorts.gov.taipei/News.aspx?n=41977EB83537C82B&sms=72544237BBE4C5F6&page=" + str(page) + "&PageSize=20" 
-                        response = requests.get(response_page)
-                        soup = BeautifulSoup(response.text, "html.parser")
-                        titles = soup.find_all("a", href=True, title=True)
-                        for title in titles:
-                            if ("News_Content.aspx?" in title['href'] and text in title['title']):
-                                return_msg += f"https://www.dorts.gov.taipei/{title['href']}\n{title['title']}\n"
-                        
-                    if text in line_lists_newtaipei:
-                        response_page = "https://www.dorts.ntpc.gov.tw/news" 
-                        response = requests.get(response_page)
-                        soup = BeautifulSoup(response.text, "html.parser")
-                        titles = soup.find_all("a",{"class": "d-block text-black text-decoration-none"})
-                        for title in titles:
-                            title_text = title.select_one("span").getText()
-                            if (text in title_text):
-                                try:
-                                    return_msg += f"https://www.dorts.ntpc.gov.tw{title['href']}\n{title_text}\n"
-                                except KeyError:
-                                    pass
+                    intro = False
+                    if "簡介" in text:
+                        text = text.removesuffix('簡介')
+                        text = text.strip()
+                        intro = True
+                    if intro:
+                        info = mrt_db.search(mode=0, text=text)
+                        if info != None:
+                            line_bot_api.push_message(
+                                event.source.user_id,
+                                ImageSendMessage(original_content_url= base_url + "/static/" + info['image_route'],
+                                                preview_image_url= base_url + "/static/" + info['image_route'])
+                            )
+                            return_msg = info['description']
+                        else:
+                            return_msg = ""
+                    else:
+                        info = mrt_db.search(mode=0, text=text)
+                        if info != None:
+                            page = 1
+                            response_page = "https://www.dorts.gov.taipei/News.aspx?n=41977EB83537C82B&sms=72544237BBE4C5F6&page=" + str(page) + "&PageSize=20" 
+                            response = requests.get(response_page)
+                            soup = BeautifulSoup(response.text, "html.parser")
+                            titles = soup.find_all("a", href=True, title=True)
+                            for title in titles:
+                                for i in info['search_name']:
+                                    if ("News_Content.aspx?" in title['href'] and i in title['title']):
+                                        return_msg += f"https://www.dorts.gov.taipei/{title['href']}\n{title['title']}\n"
+                                        break
+                            
+                        if text in line_lists_newtaipei:
+                            response_page = "https://www.dorts.ntpc.gov.tw/news" 
+                            response = requests.get(response_page)
+                            soup = BeautifulSoup(response.text, "html.parser")
+                            titles = soup.find_all("a",{"class": "d-block text-black text-decoration-none"})
+                            for title in titles:
+                                title_text = title.select_one("span").getText()
+                                if (text in title_text):
+                                    try:
+                                        return_msg += f"https://www.dorts.ntpc.gov.tw{title['href']}\n{title_text}\n"
+                                    except KeyError:
+                                        pass
 
-                    if text in line_lists_keelung:
-                        response_page = "https://www.rb.gov.tw/news_list.php?lmenuid=11&smenuid=49" 
-                        response = requests.get(response_page)
-                        soup = BeautifulSoup(response.text, "html.parser")
-                        titles = soup.find_all("a", href=True, title=True)
-                        for title in titles:
-                            if (text in title['title']):
-                                return_msg += f"https://www.rb.gov.tw/{title['href']}\n{title['title']}\n"
+                        if text in line_lists_keelung:
+                            response_page = "https://www.rb.gov.tw/news_list.php?lmenuid=11&smenuid=49" 
+                            response = requests.get(response_page)
+                            soup = BeautifulSoup(response.text, "html.parser")
+                            titles = soup.find_all("a", href=True, title=True)
+                            for title in titles:
+                                if (text in title['title']):
+                                    return_msg += f"https://www.rb.gov.tw/{title['href']}\n{title['title']}\n"
 
-                    if text in line_lists_taoyuan:
-                        response_page = "https://dorts.tycg.gov.tw/announcement/breaking-news" 
-                        response = requests.get(response_page)
-                        soup = BeautifulSoup(response.text, "html.parser")
-                        a_s = soup.find_all("a", href=True)
-                        for a in a_s:
-                            title_text = ""
-                            if ("detail-news?" in a['href']):
-                                children = a.findChildren("div", {"class": "col-md-8 text-left"})
-                                title_text = children[0].getText()
-                            if (text in title_text):
-                                try:
-                                    return_msg += f"https://dorts.tycg.gov.tw{a['href']}\n{title_text}\n"
-                                except KeyError:
-                                    pass
+                        if text in line_lists_taoyuan:
+                            response_page = "https://dorts.tycg.gov.tw/announcement/breaking-news" 
+                            response = requests.get(response_page)
+                            soup = BeautifulSoup(response.text, "html.parser")
+                            a_s = soup.find_all("a", href=True)
+                            for a in a_s:
+                                title_text = ""
+                                if ("detail-news?" in a['href']):
+                                    children = a.findChildren("div", {"class": "col-md-8 text-left"})
+                                    title_text = children[0].getText()
+                                if (text in title_text):
+                                    try:
+                                        return_msg += f"https://dorts.tycg.gov.tw{a['href']}\n{title_text}\n"
+                                    except KeyError:
+                                        pass
                             
                     if return_msg == "":
                         return_msg = "很抱歉，最近沒有任何關於此搜尋結果的新消息。建議您更改搜尋關鍵詞。"
