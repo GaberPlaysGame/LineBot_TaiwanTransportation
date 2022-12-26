@@ -13,7 +13,6 @@ from .fsm import FSMModel
 from .db import MRT_Route_DB
 
 import requests
-import urllib
 
 line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
 parser = WebhookParser(settings.LINE_CHANNEL_SECRET)
@@ -24,10 +23,10 @@ machine = FSMModel(
     states=['default', 'Taipei', 'Taichung', 'Tainan', 'Kaoshiung'],
     transitions=[
         {'trigger': 'state_MRT_Taipei', 'source': ['default', 'Taichung', 'Tainan', 'Kaoshiung'], 'dest': 'Taipei', 'conditions': 'state_MRT_Taipei'},
-        {'trigger': 'advance', 'source': ['Taipei', 'default', 'Tainan', 'Kaoshiung'], 'dest': 'Taichung', 'conditions': 'state_MRT_Taichung'},
-        {'trigger': 'advance', 'source': ['Taipei', 'Taichung', 'default', 'Kaoshiung'], 'dest': 'Tainan', 'conditions': 'state_MRT_Tainan'},
-        {'trigger': 'advance', 'source': ['Taipei', 'Taichung', 'Tainan', 'default'], 'dest': 'Kaoshiung', 'conditions': 'state_MRT_Kaohsiung'},
-        {'trigger': 'advance', 'source': ['Taipei', 'Taichung', 'Tainan', 'Kaoshiung'], 'dest': 'default', 'conditions': 'state_default'},
+        {'trigger': 'state_MRT_Taichung', 'source': ['Taipei', 'default', 'Tainan', 'Kaoshiung'], 'dest': 'Taichung', 'conditions': 'state_MRT_Taichung'},
+        {'trigger': 'state_MRT_Tainan', 'source': ['Taipei', 'Taichung', 'default', 'Kaoshiung'], 'dest': 'Tainan', 'conditions': 'state_MRT_Tainan'},
+        {'trigger': 'state_MRT_Kaoshiung', 'source': ['Taipei', 'Taichung', 'Tainan', 'default'], 'dest': 'Kaoshiung', 'conditions': 'state_MRT_Kaohsiung'},
+        {'trigger': 'state_default', 'source': ['Taipei', 'Taichung', 'Tainan', 'Kaoshiung'], 'dest': 'default', 'conditions': 'state_default'},
     ],
     initial='default', 
     show_conditions=True, 
@@ -216,8 +215,14 @@ def callback(request):
                                                 preview_image_url= base_url + "/static/" + info['image_route'])
                             )
                             return_msg = info['description']
-                        else:
-                            return_msg = ""
+                        info = mrt_db.search(mode=1, text=text)
+                        if info != None and mrt_db.search(mode=0, text=info['chi_name']) == None:
+                            line_bot_api.push_message(
+                                event.source.user_id,
+                                ImageSendMessage(original_content_url= base_url + "/static/" + info['image_route'],
+                                                preview_image_url= base_url + "/static/" + info['image_route'])
+                            )
+                            return_msg = info['description']
                     else:
                         info = mrt_db.search(mode=0, text=text)
                         if info != None:
@@ -232,18 +237,20 @@ def callback(request):
                                         return_msg += f"https://www.dorts.gov.taipei/{title['href']}\n{title['title']}\n"
                                         break
                             
-                        if text in line_lists_newtaipei:
+                        info = mrt_db.search(mode=1, text=text)
+                        if info != None:
                             response_page = "https://www.dorts.ntpc.gov.tw/news" 
                             response = requests.get(response_page)
                             soup = BeautifulSoup(response.text, "html.parser")
                             titles = soup.find_all("a",{"class": "d-block text-black text-decoration-none"})
                             for title in titles:
-                                title_text = title.select_one("span").getText()
-                                if (text in title_text):
-                                    try:
-                                        return_msg += f"https://www.dorts.ntpc.gov.tw{title['href']}\n{title_text}\n"
-                                    except KeyError:
-                                        pass
+                                for i in info['search_name']:
+                                    title_text = title.select_one("span").getText()
+                                    if (text in title_text):
+                                        try:
+                                            return_msg += f"https://www.dorts.ntpc.gov.tw{title['href']}\n{title_text}\n"
+                                        except KeyError:
+                                            pass
 
                         if text in line_lists_keelung:
                             response_page = "https://www.rb.gov.tw/news_list.php?lmenuid=11&smenuid=49" 

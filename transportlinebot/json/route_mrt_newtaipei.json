@@ -1,0 +1,85 @@
+{
+    "data": [
+        {
+            "chi_name": "淡海輕軌",
+            "search_name": ["淡海輕軌", "藍海線", "綠山線"],
+            "alias": [
+                "淡海輕軌",
+                "藍海線",
+                "綠山線",
+                "淡海輕軌藍海線",
+                "淡海輕軌綠山線",
+                "淡海線"
+            ],
+            "route_code": "V",
+            "image_route": "tp_danhai_map.jpg",
+            "description": "淡海輕軌為新北捷運營運的路線，自2016年開始營運，包含綠山線與藍海線一期。連接到淡水捷運站的藍海線二期目前正在進行規劃中，預訂綜合規劃核定後4年通車。"
+        },
+        {
+            "chi_name": "安坑輕軌",
+            "search_name": ["安坑輕軌"],
+            "alias": [
+                "安坑輕軌",
+                "安坑線"
+            ],
+            "route_code": "K",
+            "image_route": "tp_ankeng_map.jpg",
+            "description": "安坑輕軌為新北捷運興建中的路線，預計於2023年1月通車。"
+        },
+        {
+            "chi_name": "三鶯線",
+            "search_name": ["三鶯線"],
+            "alias": [
+                "三鶯線",
+                "三峽鶯歌線"
+            ],
+            "route_code": "LB",
+            "image_route": "tp_sanying_map.jpg",
+            "description": "三鶯線為新北捷運興建中的路線，服務三峽與鶯歌地區，規劃中的第二階段預計延伸至桃園八德。目前第一階段計畫2024年左右通車。"
+        },
+        {
+            "chi_name": "深坑輕軌",
+            "search_name": ["深坑輕軌"],
+            "alias": [
+                "深坑輕軌",
+                "深坑線"
+            ],
+            "route_code": "S",
+            "image_route": "tp_shengkeng_map.jpg",
+            "description": "深坑輕軌為新北捷運規劃中的路線，計畫服務深坑地區。目前整案通過可行性研究，預計在綜合規劃通過後的4年完工。"
+        },
+        {
+            "chi_name": "八里輕軌",
+            "search_name": ["八里輕軌"],
+            "alias": [
+                "八里輕軌",
+                "八里線"
+            ],
+            "route_code": "V",
+            "image_route": "tp_bali_map.jpg",
+            "description": "八里輕軌為新北捷運規劃中的路線。目前整案通過可行性研究，預計在綜合規劃通過後的4年完工。"
+        },
+        {
+            "chi_name": "五股泰山輕軌",
+            "search_name": ["五股泰山輕軌", "五泰輕軌"],
+            "alias": [
+                "五股泰山輕軌",
+                "五泰輕軌"
+            ],
+            "route_code": "F",
+            "image_route": "tp_wutai_map.jpg",
+            "description": "五股泰山輕軌為新北捷運規劃中的路線。目前整案通過可行性研究，預計在綜合規劃通過後的4年完工。"
+        },
+        {
+            "chi_name": "泰山板橋輕軌",
+            "search_name": ["泰山板橋輕軌", "泰板輕軌"],
+            "alias": [
+                "泰山板橋輕軌",
+                "泰板輕軌"
+            ],
+            "route_code": "F",
+            "image_route": "tp_taiban_map.png",
+            "description": "泰山板橋輕軌為新北捷運規劃中的路線。目前整案正進行可行性研究中，預計在綜合規劃通過後的4年完工。"
+        }
+    ]
+}
